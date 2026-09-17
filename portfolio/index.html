@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoEcom Intelligence | Enterprise E-Commerce Automation & White-Label Reporting</title>
+<style>
+  :root {
+    --bg-dark: #090d16;
+    --card-bg: #111827;
+    --border: #1f293d;
+    --primary: #3b82f6;
+    --primary-glow: rgba(59, 130, 246, 0.4);
+    --accent: #10b981;
+    --text-light: #f9fafb;
+    --text-muted: #9ca3af;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    padding: 0 20px 80px 20px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 70px 0 40px 0;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #93c5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  p.subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    max-width: 720px;
+    margin: 0 auto 30px auto;
+  }
+  .cta-group {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 12px 26px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 4px 20px var(--primary-glow);
+  }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-outline {
+    background: transparent;
+    color: var(--text-light);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+  /* Feature Grid */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 50px 0;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .card-icon { font-size: 28px; margin-bottom: 12px; }
+  .card-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .card-desc { font-size: 14px; color: var(--text-muted); }
+
+  /* Comparison */
+  .comparison {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 30px;
+    margin: 50px 0;
+  }
+  .comp-title { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 24px; }
+  .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .comp-grid { grid-template-columns: 1fr; } }
+  .comp-col { padding: 20px; border-radius: 8px; font-size: 14px; }
+  .comp-col.bad { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); }
+  .comp-col.good { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); }
+  .comp-h { font-weight: 700; font-size: 16px; margin-bottom: 12px; }
+  .comp-list { list-style: none; }
+  .comp-list li { margin-bottom: 8px; display: flex; gap: 8px; }
+
+  /* Proof & Live Artifact */
+  .demo-banner {
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #111827 0%, #0d1320 100%);
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+    margin: 50px 0;
+  }
+  .badge-tag {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Hero -->
+  <div class="hero">
+    <div class="pill">⚡ Automated E-Commerce Reporting & Operations Engine</div>
+    <h1>Turn Messy E-Commerce CSVs Into<br>Executive Intelligence In 3 Seconds</h1>
+    <p class="subtitle">
+      Eliminate manual copy-pasting, VLOOKUP errors, and Monday morning reporting chaos. 
+      Automated fuzzy data ingestion, deterministic mathematical auditing (diff=0.0), and client-ready interactive dashboards.
+    </p>
+    <div class="cta-group">
+      <a href="../data/deliverables/weekly_dashboard.html" class="btn btn-primary" target="_blank">View Live Dashboard Demo (HTML)</a>
+      <a href="../data/deliverables/executive_briefing.md" class="btn btn-outline" target="_blank">Read Executive Briefing</a>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-icon">🧹</div>
+      <div class="card-title">Fuzzy Auto-Cleaning</div>
+      <div class="card-desc">
+        Seamlessly normalizes mixed date timestamps (YYYY/MM/DD vs YYYY-MM-DD), strips messy currency symbols and trailing spaces, and filters unpaid/closed transactions.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔒</div>
+      <div class="card-title">Double-Entry Audit (diff=0.0)</div>
+      <div class="card-desc">
+        Every run is verified through 5 mathematical balance equations: Daily Sum == GMV, Net Sales == Gross - Refunds, and Gross Margin == Net - COGS - Ads. Zero AI hallucination.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📈</div>
+      <div class="card-title">SKU 4-Quadrant Matrix</div>
+      <div class="card-desc">
+        Identifies cash cows, flags low-stock emergencies before stockouts occur, alerts high refund rate SKUs, and pinpoints ad budget money pits (low ROI ad spend).
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison -->
+  <div class="comparison">
+    <div class="comp-title">Why E-Commerce Agencies & Brands Choose Automated Intelligence</div>
+    <div class="comp-grid">
+      <div class="comp-col bad">
+        <div class="comp-h" style="color: #ef4444;">❌ Manual Spreadsheet Process</div>
+        <ul class="comp-list">
+          <li>✖ 15-20 hours wasted every week downloading files and merging tables</li>
+          <li>✖ Accidental formula breakages and incorrect ROI reported to clients</li>
+          <li>✖ Numbers only; no automated anomaly detection or strategic diagnosis</li>
+          <li>✖ High junior analyst turnover & payroll expenses ($3k - $5k/mo)</li>
+        </ul>
+      </div>
+      <div class="comp-col good">
+        <div class="comp-h" style="color: #10b981;">✅ Automated Agency Engine</div>
+        <ul class="comp-list">
+          <li>✔ 1-click execution: raw export in &rarr; full deliverable pack in 3 seconds</li>
+          <li>✔ 100% mathematical audit trail: diff=0.0 checksum guaranteed</li>
+          <li>✔ Instant executive takeaways, red-flag alerts, and actionable recommendations</li>
+          <li>✔ Pure white-label deliverables branded with your agency logo</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deliverables Demo -->
+  <div class="demo-banner">
+    <span class="badge-tag">Deliverable Pack Included</span>
+    <h3 style="margin: 16px 0 8px 0; font-size: 22px;">Ready-to-Deploy Assets</h3>
+    <p style="color: var(--text-muted); font-size: 14px; max-width: 600px; margin: 0 auto 20px auto;">
+      Includes the standalone interactive single-file HTML dashboard, 5-sheet audited Excel workbook (.xlsx), markdown executive briefing, and JSON validation trail.
+    </p>
+    <div style="font-size: 13px; color: #60a5fa;">
+      Tested & Verified on Real Multi-Channel Data · 100% Green Test Suite
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
