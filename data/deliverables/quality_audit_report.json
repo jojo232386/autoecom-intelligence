@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "checked_at": "2026-09-17 22:00:49",
+  "checks": {
+    "gmv_vs_daily_sum": {
+      "total_gmv": 121315.0,
+      "daily_sum": 121315.0,
+      "diff": 0.0,
+      "passed": true
+    },
+    "net_sales_equation": {
+      "total_net_sales": 109375.0,
+      "calculated_net": 109375.0,
+      "diff": 0.0,
+      "passed": true
+    },
+    "gmv_vs_sku_sum": {
+      "total_gmv": 121315.0,
+      "sku_sum": 121315.0,
+      "diff": 0.0,
+      "passed": true
+    },
+    "ad_spend_vs_campaign_sum": {
+      "total_ad_spend": 22019.03,
+      "campaign_spend_sum": 22019.03,
+      "diff": 0.0,
+      "passed": true
+    },
+    "profit_equation": {
+      "gross_profit": 54734.97,
+      "expected_profit": 54734.97,
+      "diff": 0.0,
+      "passed": true
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "store_summary_snapshot": {
+    "store_name": "美澜风尚旗舰店",
+    "period_label": "2026-W37周报",
+    "total_orders": 372,
+    "total_units": 415,
+    "total_gmv": 121315.0,
+    "total_net_sales": 109375.0,
+    "total_refunds": 11940.0,
+    "refund_rate_pct": 9.84,
+    "total_ad_spend": 22019.03,
+    "blended_roi": 5.51,
+    "gross_profit": 54734.97,
+    "gross_profit_margin_pct": 50.04
+  }
+}
