@@ -27,6 +27,9 @@ def main():
     # Status
     subparsers.add_parser("status", help="View active CRM prospect pipeline and revenue")
 
+    # Listen
+    subparsers.add_parser("listen", help="Poll GitHub inbound pilot request issues")
+
     # Dispatch
     dispatch_parser = subparsers.add_parser("dispatch", help="Stage or send outreach to a target lead")
     dispatch_parser.add_argument("--id", type=int, required=True, help="Lead ID from CRM")
@@ -75,6 +78,11 @@ def main():
                 f"${l['revenue_collected']:.2f}" if l["currency"] == "USD" else f"¥{l['revenue_collected']:.2f}"
             )
         console.print(table)
+
+    elif args.command == "listen":
+        from engine.sales_agent.inbound_listener import InboundListener
+        InboundListener.process_inbound_issues()
+        console.print("[bold green]✅ Inbound GitHub issue check completed.[/bold green]")
 
     elif args.command == "dispatch":
         success = OutreachDispatcher.stage_outreach_macos(args.id)
