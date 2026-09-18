@@ -44,17 +44,58 @@ INITIAL_LEADS = [
         "tier": "TIER_2",
         "pain_point": "Multi-channel ad spend consolidation and weekly GMV tracking",
         "custom_hook": "Multi-region DTC and cross-border store scaling",
+    },
+    {
+        "company_name": "Avex Designs",
+        "website": "https://avexdesigns.com",
+        "niche": "Luxury, fashion & lifestyle Shopify Plus DTC brands",
+        "country": "US",
+        "contact_email": "newbusiness@avexdesigns.com",
+        "tier": "TIER_1",
+        "pain_point": "High-touch weekly client reporting and gross margin auditing",
+        "custom_hook": "Scaling premier fashion and DTC retail accounts",
+    },
+    {
+        "company_name": "MindArc",
+        "website": "https://mindarc.com.au",
+        "niche": "High-volume Australian Shopify Plus retailers",
+        "country": "Australia",
+        "contact_email": "hello@mindarc.com.au",
+        "tier": "TIER_1",
+        "pain_point": "Multi-store weekly operational reporting and inventory health monitoring",
+        "custom_hook": "Powering leading Australian enterprise eCommerce brands",
+    },
+    {
+        "company_name": "Overdose. Digital",
+        "website": "https://overdose.digital",
+        "niche": "Global digital commerce & retail operations",
+        "country": "Global",
+        "contact_email": "hello@overdose.digital",
+        "tier": "TIER_1",
+        "pain_point": "Consolidating disparate analytics spreadsheets into executive dashboards",
+        "custom_hook": "Global multi-region retail and DTC transformation",
+    },
+    {
+        "company_name": "blubolt",
+        "website": "https://blubolt.com",
+        "niche": "Fast-growing UK Shopify Plus brands",
+        "country": "UK",
+        "contact_email": "hello@blubolt.com",
+        "tier": "TIER_2",
+        "pain_point": "Weekly client marketing ROAS and SKU-level profit tracking",
+        "custom_hook": "Accelerating UK fashion and lifestyle eCommerce growth",
     }
 ]
 
 def seed_database():
     init_crm_db()
     existing = LeadManager.get_all_leads()
-    if existing:
-        print(f"CRM database already contains {len(existing)} leads. Skipping seed.")
-        return
+    existing_emails = {l["contact_email"] for l in existing}
 
+    added = 0
     for l in INITIAL_LEADS:
+        if l["contact_email"] in existing_emails:
+            continue
         pitch = PitchGenerator.generate_pitch(l)
         lead_record = {
             **l,
@@ -64,6 +105,9 @@ def seed_database():
         }
         lead_id = LeadManager.add_lead(lead_record)
         print(f"Seeded Lead #{lead_id}: {l['company_name']} ({l['contact_email']}) -> PITCH_READY")
+        added += 1
+
+    print(f"Database sync complete. Total active leads in CRM: {len(LeadManager.get_all_leads())} (Added: {added})")
 
 if __name__ == "__main__":
     seed_database()
