@@ -1,6 +1,11 @@
 # 「极简周报」电商代运营多店铺经营分析与白牌周报自动化引擎
 > **AutoEcom Analytics White-label Delivery Engine**  
 > 一套低人工参与、纯确定性核算、闭环自检、高溢价白牌代工的 AI 自动化商业交付系统。
+> 
+> 🌐 **公网作品页**: [jojo232386.github.io/autoecom-intelligence](https://jojo232386.github.io/autoecom-intelligence/)  
+> 📊 **全屏交互看板实时 Demo**: [在线体验 Interactive Dashboard](https://jojo232386.github.io/autoecom-intelligence/demo.html)  
+> 🚀 **免费申领单店试跑 (Free Pilot)**: [立即在 GitHub 提交试单工单](https://github.com/jojo232386/autoecom-intelligence/issues/new?template=01_request_free_pilot.yml)  
+> 🏛️ **代运营机构白牌包月合作**: [提交代工咨询](https://github.com/jojo232386/autoecom-intelligence/issues/new?template=02_agency_whitelabel_inquiry.yml)
 
 ---
 

@@ -1,0 +1,38 @@
+name: "🏛️ Agency White-Label Partnership Inquiry"
+description: "Inquire about agency monthly retainers ($499 - $1,499/mo) for 5-20 client stores"
+title: "[Agency Inquiry]: <Agency Name>"
+labels: ["agency-retainer", "b2b-partnership"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Agency White-Label Operations Partnership
+        We automate Monday client reporting for agencies managing 5 to 50+ stores.
+  - type: input
+    id: agency_name
+    attributes:
+      label: "Agency Name"
+      placeholder: "e.g. Nexus DTC Marketing"
+    validations:
+      required: true
+  - type: input
+    id: client_store_count
+    attributes:
+      label: "Number of Active Client Stores"
+      placeholder: "e.g. 10 stores"
+    validations:
+      required: true
+  - type: input
+    id: contact_email
+    attributes:
+      label: "Contact Email / Slack / WeChat"
+      placeholder: "e.g. partnerships@nexusmarketing.com"
+    validations:
+      required: true
+  - type: textarea
+    id: current_pain
+    attributes:
+      label: "Current Reporting Bottleneck"
+      placeholder: "What takes the most time in your current Monday reporting workflow?"
+    validations:
+      required: false
