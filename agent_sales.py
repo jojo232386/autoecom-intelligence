@@ -5,7 +5,7 @@ Commands:
 - status: Shows all prospects, pipeline stages, and revenue in CRM
 - dispatch: Automatically stages an outreach email for a prospect in macOS mail client
 - reply: Ingests an incoming client message and outputs the exact tailored closing response
-- won: Records verified revenue collected from a customer
+- won: Records unverified payment claims
 """
 import sys
 import argparse
@@ -54,8 +54,8 @@ def main():
 
         console.print(Panel.fit(
             f"[bold cyan]AutoEcom Sales Agent · B2B Enterprise Pipeline[/bold cyan]\n"
-            f"[dim]Verified Inbound/Outbound Funnels · Active CRM Prospects: {len(leads)}[/dim]\n"
-            f"[bold green]Verified Net Revenue Collected: ${total_rev_usd:.2f} USD | ¥{total_rev_cny:.2f} RMB[/bold green]",
+            f"[dim]Recorded Inbound/Outbound Funnels · Active CRM Prospects: {len(leads)}[/dim]\n"
+            f"[bold green]Unverified payment claims (not net revenue): ${total_rev_usd:.2f} USD | ¥{total_rev_cny:.2f} RMB[/bold green]",
             border_style="cyan"
         ))
 
@@ -65,7 +65,7 @@ def main():
         table.add_column("业务定位 / 客户群", width=26)
         table.add_column("商务邮箱 / 渠道", width=24)
         table.add_column("状态", style="cyan", width=14)
-        table.add_column("已收款", justify="right", style="green", width=12)
+        table.add_column("待核验金额", justify="right", style="green", width=12)
 
         for l in leads:
             status_style = "green" if l["status"] == "WON" else ("blue" if l["status"] == "DISPATCHED" else "yellow")
@@ -107,7 +107,7 @@ def main():
 
     elif args.command == "won":
         LeadManager.record_revenue(args.id, args.amount, args.currency)
-        console.print(f"[bold green]🎉 真实到账成功入库: Lead #{args.id} 支付 {args.currency} {args.amount}！[/bold green]")
+        console.print(f"[bold green]🎉 未核验收款声明已记录: Lead #{args.id} 支付 {args.currency} {args.amount}！[/bold green]")
 
 if __name__ == "__main__":
     main()

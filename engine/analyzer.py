@@ -30,12 +30,12 @@ class DataAnalyzer:
                 total_refunds=0.0,
                 refund_rate_pct=0.0,
                 total_net_sales=0.0,
-                total_ad_spend=0.0,
-                blended_roi=0.0,
-                total_direct_ad_gmv=0.0,
-                total_cogs=0.0,
-                gross_profit=0.0,
-                gross_profit_margin_pct=0.0
+                total_ad_spend=None,
+                blended_roi=None,
+                total_direct_ad_gmv=None,
+                total_cogs=None,
+                gross_profit=None,
+                gross_profit_margin_pct=None
             )
 
         # Date range
@@ -55,17 +55,22 @@ class DataAnalyzer:
         total_direct_ad_gmv = round(sum(a.direct_gmv for a in ads), 2)
         blended_roi = round(total_gmv / total_ad_spend, 2) if total_ad_spend > 0 else 0.0
 
-        # Calculate COGS (Cost of Goods Sold on net shipped units)
-        total_cogs = 0.0
-        for o in orders:
-            cost = inventory.get(o.sku_id, InventoryItem(o.sku_id, o.sku_name, o.category, 0, 0, 0, 0)).cost
-            # If refunded, cost is excluded from COGS (returned to inventory)
-            if o.refund_amount <= 0.0:
-                total_cogs += o.quantity * cost
-        total_cogs = round(total_cogs, 2)
+        # Refund amount does not establish returned units or recoverable cost.
+        def cogs(rows):
+            if any(o.sku_id not in inventory or inventory[o.sku_id].cost is None
+                   or o.refund_amount > 0 for o in rows):
+                return None
+            return round(sum(o.quantity * inventory[o.sku_id].cost for o in rows), 2)
 
-        gross_profit = round(total_net_sales - total_cogs - total_ad_spend, 2)
-        gross_profit_margin_pct = round((gross_profit / total_net_sales * 100), 2) if total_net_sales > 0 else 0.0
+        def profit(net, cost, spend):
+            return round(net - cost - spend, 2) if cost is not None and ads else None
+
+        def margin(value, net):
+            return round(value / net * 100, 2) if value is not None and net > 0 else None
+
+        total_cogs = cogs(orders)
+        gross_profit = profit(total_net_sales, total_cogs, total_ad_spend)
+        gross_profit_margin_pct = margin(gross_profit, total_net_sales)
 
         # 2. Daily Metrics
         daily_orders_map = defaultdict(list)
@@ -93,13 +98,9 @@ class DataAnalyzer:
             d_direct_gmv = round(sum(a.direct_gmv for a in d_ads), 2)
             d_roi = round(d_gmv / d_spend, 2) if d_spend > 0 else 0.0
 
-            d_cogs = 0.0
-            for o in d_orders:
-                cost = inventory.get(o.sku_id, InventoryItem(o.sku_id, o.sku_name, o.category, 0, 0, 0, 0)).cost
-                if o.refund_amount <= 0.0:
-                    d_cogs += o.quantity * cost
-            d_profit = round(d_net - d_cogs - d_spend, 2)
-            d_margin = round((d_profit / d_net * 100), 2) if d_net > 0 else 0.0
+            d_cogs = cogs(d_orders)
+            d_profit = profit(d_net, d_cogs, d_spend)
+            d_margin = margin(d_profit, d_net)
 
             daily_metrics_list.append(DailyMetrics(
                 date=d,
@@ -108,9 +109,9 @@ class DataAnalyzer:
                 gmv=d_gmv,
                 refunds=d_refunds,
                 net_sales=d_net,
-                ad_spend=d_spend,
-                direct_ad_gmv=d_direct_gmv,
-                blended_roi=d_roi,
+                ad_spend=d_spend if ads else None,
+                direct_ad_gmv=d_direct_gmv if ads else None,
+                blended_roi=d_roi if d_spend > 0 else None,
                 gross_profit=d_profit,
                 profit_margin_pct=d_margin
             ))
@@ -134,9 +135,9 @@ class DataAnalyzer:
 
             sku_name = inv_item.name if inv_item else (s_orders[0].sku_name if s_orders else s_id)
             category = inv_item.category if inv_item else (s_orders[0].category if s_orders else "未分类")
-            current_stock = inv_item.stock if inv_item else 0
-            safety_stock = inv_item.safety_stock if inv_item else 20
-            unit_cost = inv_item.cost if inv_item else 0.0
+            current_stock = inv_item.stock if inv_item else None
+            safety_stock = inv_item.safety_stock if inv_item else None
+            unit_cost = inv_item.cost if inv_item else None
 
             s_count = len(s_orders)
             s_units = sum(o.quantity for o in s_orders)
@@ -149,23 +150,21 @@ class DataAnalyzer:
             s_direct_gmv = round(sum(a.direct_gmv for a in s_ads), 2)
             s_direct_roi = round(s_direct_gmv / s_ad_spend, 2) if s_ad_spend > 0 else 0.0
 
-            # Shipped COGS
-            shipped_units = sum(o.quantity for o in s_orders if o.refund_amount <= 0.0)
-            s_cogs = round(shipped_units * unit_cost, 2)
-            s_profit = round(s_net - s_cogs - s_ad_spend, 2)
-            s_margin_pct = round((s_profit / s_net * 100), 2) if s_net > 0 else 0.0
+            s_cogs = cogs(s_orders)
+            s_profit = profit(s_net, s_cogs, s_ad_spend)
+            s_margin_pct = margin(s_profit, s_net)
 
             # Stock turnover status
-            if current_stock <= safety_stock:
+            if current_stock is not None and safety_stock is not None and current_stock <= safety_stock:
                 stock_status = "缺货告急"
-            elif current_stock > safety_stock * 8:
+            elif current_stock is not None and safety_stock is not None and current_stock > safety_stock * 8:
                 stock_status = "库存积压"
             else:
-                stock_status = "周转健康"
+                stock_status = "未提供" if current_stock is None or safety_stock is None else "周转健康"
 
             # Quadrant tagging & alerts
             alerts = []
-            if current_stock <= safety_stock:
+            if current_stock is not None and safety_stock is not None and current_stock <= safety_stock:
                 alerts.append(f"库存告急: 仅剩{current_stock}件 (警戒线{safety_stock})")
             if s_refund_pct >= 20.0:
                 alerts.append(f"高退款率预警: {s_refund_pct}%")
@@ -178,10 +177,12 @@ class DataAnalyzer:
                 quadrant = "退款隐患"
             elif s_gmv >= (total_gmv * 0.18) and s_refund_pct <= 15.0:
                 quadrant = "现金金牛"
-            elif s_direct_roi >= 2.0 or (s_margin_pct >= 25.0 and s_gmv >= 5000):
+            elif s_direct_roi >= 2.0 or (s_margin_pct is not None and s_margin_pct >= 25.0 and s_gmv >= 5000):
                 quadrant = "潜力爆品"
             else:
                 quadrant = "平销防守"
+
+            quadrant = "数据不足，暂停利润结论" if s_profit is None else ("贡献利润为负" if s_profit < 0 else "贡献利润非负")
 
             sku_metrics_list.append(SKUMetrics(
                 sku_id=s_id,
@@ -193,9 +194,9 @@ class DataAnalyzer:
                 refund_amount=s_refund,
                 net_sales=s_net,
                 refund_rate_pct=s_refund_pct,
-                ad_spend=s_ad_spend,
-                direct_ad_gmv=s_direct_gmv,
-                direct_roi=s_direct_roi,
+                ad_spend=s_ad_spend if ads else None,
+                direct_ad_gmv=s_direct_gmv if ads else None,
+                direct_roi=s_direct_roi if s_ad_spend > 0 else None,
                 estimated_cogs=s_cogs,
                 gross_profit=s_profit,
                 gross_margin_pct=s_margin_pct,
@@ -260,9 +261,9 @@ class DataAnalyzer:
             total_refunds=total_refunds,
             refund_rate_pct=refund_rate_pct,
             total_net_sales=total_net_sales,
-            total_ad_spend=total_ad_spend,
-            blended_roi=blended_roi,
-            total_direct_ad_gmv=total_direct_ad_gmv,
+            total_ad_spend=total_ad_spend if ads else None,
+            blended_roi=blended_roi if total_ad_spend > 0 else None,
+            total_direct_ad_gmv=total_direct_ad_gmv if ads else None,
             total_cogs=total_cogs,
             gross_profit=gross_profit,
             gross_profit_margin_pct=gross_profit_margin_pct,

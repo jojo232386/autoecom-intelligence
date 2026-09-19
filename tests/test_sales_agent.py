@@ -28,8 +28,8 @@ def test_sales_agent_flow():
     # Test Response Handler
     resp_pilot = ResponseHandler.handle_inquiry("We want to try the free pilot", "Acme Agency")
     assert resp_pilot["intent"] == "PILOT_REQUEST"
-    assert "30 minutes" in resp_pilot["body"]
+    assert "after format review" in resp_pilot["body"]
 
     resp_price = ResponseHandler.handle_inquiry("What are your monthly retainer rates?", "Acme Agency")
     assert resp_price["intent"] == "PRICING_INQUIRY"
-    assert "$499" in resp_price["body"]
+    assert "Scope, price" in resp_price["body"]

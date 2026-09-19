@@ -1,108 +1,21 @@
-# 「极简周报」电商代运营多店铺经营分析与白牌周报自动化引擎
-> **AutoEcom Analytics White-label Delivery Engine**  
-> 一套低人工参与、纯确定性核算、闭环自检、高溢价白牌代工的 AI 自动化商业交付系统。
-> 
-> 🌐 **公网作品页**: [jojo232386.github.io/autoecom-intelligence](https://jojo232386.github.io/autoecom-intelligence/)  
-> 📊 **全屏交互看板实时 Demo**: [在线体验 Interactive Dashboard](https://jojo232386.github.io/autoecom-intelligence/demo.html)  
-> 🚀 **免费申领单店试跑 (Free Pilot)**: [立即在 GitHub 提交试单工单](https://github.com/jojo232386/autoecom-intelligence/issues/new?template=01_request_free_pilot.yml)  
-> 🏛️ **代运营机构白牌包月合作**: [提交代工咨询](https://github.com/jojo232386/autoecom-intelligence/issues/new?template=02_agency_whitelabel_inquiry.yml)
+# AutoEcom: reviewed single-store CSV reports
 
----
+Current owner: Codex. Business goal: OPEN. External integration: BLOCKED_EXTERNAL.
 
-## 🚀 业务定位与价值公式
+Supported service: one store, agreed UTF-8 CSV format, HTML/XLSX/Markdown outputs and arithmetic checks. No source truth, net-profit, delivery-time or revenue guarantee. Missing inputs yield N/A. Refund amounts do not establish returned units or recoverable COGS; refunded orders suppress dependent cost/profit metrics pending agreed rules.
 
-- **服务对象**：电商代运营公司 (TP / DP)、矩阵式店铺操盘工作室、中小品牌电商团队。
-- **痛点替代**：替代运营助理每周一花费 10~20 小时手动导表、VLOOKUP 拼凑、PPT 制图的机械苦力。
-- **核心承诺**：
-  - **交付速度**：从人工 2 天缩短至 **系统 3 秒**。
-  - **核算精度**：**100% 会计级勾稽关系核验**，杜绝大模型数字幻觉与人工抄写错误。
-  - **白牌赋能**：100% 白牌交付，代运营打上自己的 Logo 交付甲方品牌，提高代运营续费率与溢价。
-  - **投入产出比**：代工成本仅为雇佣专职数据助理的 1/5。
+Private runtime defaults to `~/Library/Application Support/AutoEcom`; override with `AUTOECOM_DB_PATH`. Never track runtime data or credentials. `tests/fixtures` is generated synthetic data. Public Issues accept non-sensitive questions only. Historical Git versions still contain previously tracked data; this change does not rewrite history or remove already published copies.
 
----
+## Local operation
 
-## 📦 标准化交付成果 (4合1交付包)
+Use Python 3.13+ with pytest, openpyxl and rich. `python -m pytest -q` runs isolated offline tests with synthetic customers and mocked SMTP/IMAP; it does not send mail.
 
-执行系统后，将在 `data/deliverables/` 自动生成全套可直接交付客户的成果：
+`python pilot_cli.py poll` polls one private IMAP inbox read-only. Configure `PILOT_IMAP_HOST`, `PILOT_EMAIL`, `PILOT_PASSWORD` and comma-separated `PILOT_ALLOWED_SENDERS` through local environment/secrets storage. Attachment names must be exactly `orders.csv`, optional `ads.csv`, `inventory.csv`; links, code and other formats are rejected. Order columns: order_id, order_time, sku_id, quantity, amount, refund_amount, order_status; supported exact Chinese aliases are in cleaner.py. No fuzzy substring mapping. Explicit zero is required for zero refund. Duplicate order/SKU rows and invalid required data stop processing.
 
-| 交付成果 | 文件格式 | 核心价值 |
-| :--- | :--- | :--- |
-| **全屏交互式看板** | `weekly_dashboard.html` | 现代化 Dark/Light 响应式看板，含 KPI 卡片、日度走势图、SKU 四象限矩阵、计划投产诊断。支持浏览器打开按 `Cmd+P` 一键导出高端 PDF。 |
-| **多Sheet审计级报表** | `weekly_report.xlsx` | 包含 5 大 Sheet：`经营周报总览_KPI`、`每日明细对账_Daily`、`SKU经营透视_Products`、`投流计划ROI_Ads`、`质检与勾稽平衡表_Audit`。自动格式化货币、百分比与斑马纹。 |
-| **高管速递摘要** | `executive_briefing.md` | 60 秒极简提炼，包含大盘战绩、第一爆款断货预警、亏损计划止血建议、下周运营聚焦。可直接复制发送微信群或飞书。 |
-| **物理勾稽核验单** | `quality_audit_report.json` | 机器可读的核验凭据，记录 GMV 平衡、净销平衡、SKU 汇总、广告消耗勾稽差异（diff=0.0）。 |
+`python pilot_cli.py status --job ID` shows state and the output manifest hash. Review key totals against the source and inspect the four outputs in the private job folder, then `python pilot_cli.py approve --job ID --manifest-hash HASH --reviewer NAME`. No automatic approval whitelist is enabled.
 
----
+After explicit authorization, set `PILOT_SMTP_HOST`, optional `PILOT_SMTP_PORT` (587), and `PILOT_SEND_AUTHORIZED` to approved recipient addresses. `python pilot_cli.py send --job ID` attaches only unchanged reviewed outputs, using STARTTLS. Exact STOP/unsubscribe/退订 in subject or plain body suppresses future sends. Review is invalidated by changed output hashes.
 
-## 🛠️ 快速上手与运行指令
+SMTP_ACCEPTED means the SMTP server accepted the message, not DELIVERED. SEND_FAILED can retry up to three attempts; SEND_UNKNOWN or a crash in SENDING requires provider-side reconciliation and has no automatic resend. No delivery webhook is configured; delivery and client acceptance remain unknown. Local processing restarts safely under an OS job lock. Poll is a bounded single scan of the latest 100 messages; continuous monitoring, backfill and scheduling are not enabled.
 
-### 1. 激活环境
-```bash
-cd /Users/ASUS/Desktop/agy3
-source .venv/bin/activate
-```
-
-### 2. 一键全流程执行
-```bash
-# 使用默认样例数据直接生成
-python cli.py
-
-# 指定自定义店铺与输入文件
-python cli.py \
-  --orders data/raw_inputs/orders_export.csv \
-  --ads data/raw_inputs/ads_spend_export.csv \
-  --inventory data/raw_inputs/inventory_cost.csv \
-  --store "美澜风尚旗舰店" \
-  --period "2026-W37周报" \
-  --agency "星瀚数字代运营" \
-  --out data/deliverables
-```
-
-### 3. 运行自动化测试套件
-```bash
-pytest
-```
-*(全部 8 项测试涵盖清洗层、计算层、象限分类、勾稽核验与集成管线，100% Green)*
-
----
-
-## 📁 目录结构
-
-```
-/Users/ASUS/Desktop/agy3/
-├── business/                               # 商业化运营与拓客闭环
-│   ├── 01_market_research_top3.md         # Top 3 落地场景深度调研与评分
-│   ├── 02_commercial_offer.md             # 最小可售产品规格、定价阶梯与服务边界
-│   ├── 03_client_prospects_and_channels.md # 5大渠道客户画像与杠杆渠道库
-│   └── 04_cold_outreach_templates.md      # 微信私聊/渠道分成/社群引流实战话术
-├── engine/                                 # 核心自动化引擎
-│   ├── models.py                          # 领域数据模型
-│   ├── cleaner.py                         # 跨平台表头模糊对齐与脏数据清洗
-│   ├── analyzer.py                        # 确定性会计指标与SKU象限分析
-│   ├── insight_rules.py                   # 业务诊断规则库与行动建议引擎
-│   ├── quality_checker.py                 # 会计级物理勾稽自检
-│   ├── report_generator.py                # HTML看板、Excel工作簿与摘要生成器
-│   └── pipeline.py                        # 全流程自动化集成调度
-├── data/
-│   ├── raw_inputs/                        # 真实多平台导出样例 (含异常边缘场景)
-│   └── deliverables/                      # 自动生成的全套交付成果
-├── tests/                                 # 自动化测试套件
-├── scripts/                               # 数据仿真与测试脚本
-├── cli.py                                 # 命令行启动入口
-└── README.md                              # 业务与系统总览
-```
-
----
-
-## 💰 商业变现行动路线图 (Action Plan)
-
-1. **第一阶段：以测促单（本周）**
-   - 目标：获取首个真实付费客户。
-   - 策略：使用 `business/04_cold_outreach_templates.md` 中的【模版一】，向 20-30 家中小型代运营公司/工作室负责人发送私信，提供**【免费试测 1 家店铺周报】**。
-   - 转化：交付后展现惊艳的 HTML 看板与 Excel，提供 ¥99 尝鲜价或 ¥1,999/月 白牌包月。
-2. **第二阶段：渠道杠杆（第 2~4 周）**
-   - 目标：签约 2~3 家代运营服务商，锁定 15~30 家店铺，稳定月流水 ¥4,500 ~ ¥10,000。
-   - 策略：主攻代运营机构白牌代工，帮其团队直接减负。
-3. **第三阶段：无人化全自动托管**
-   - 目标：人工参与度降至 5% 以下。
-   - 策略：配置网盘/微信群机器人自动接收客户扔进来的 CSV/Excel，定时触发 `python cli.py`，质检通过后自动回传成果，仅在质检报警时人工介入。
+`agent_sales.py won` records an unverified payment claim only, not verified revenue. Legacy lead SMTP sending is disabled; only reviewed pilot jobs use the live sending path. Pricing, collection fees, refunds, invoice and payout evidence remain separate from engineering success.

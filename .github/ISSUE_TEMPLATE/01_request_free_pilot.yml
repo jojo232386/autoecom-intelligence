@@ -1,44 +1,17 @@
-name: "🚀 Request Free 1-Store Pilot"
-description: "Submit your sample e-commerce data (CSV/Excel) for an automated executive dashboard within 30 mins"
-title: "[Pilot Request]: <Store or Agency Name>"
-labels: ["pilot-request", "commercial-lead"]
+name: "Public service question"
+description: "Non-sensitive questions about fixed-format CSV reporting"
+title: "[Question]: "
 body:
   - type: markdown
     attributes:
       value: |
-        ### Free 1-Store Weekly Intelligence Pilot
-        We provide a 100% free pilot for your agency or store. Upload a sample export (orders, ad spend, or inventory) or paste a Google Sheets link. Sensitive customer data (names, phones) should be masked.
-  - type: input
-    id: company_name
-    attributes:
-      label: "Store / Agency Name"
-      placeholder: "e.g. Acme Digital / BlueTrend Apparel"
-    validations:
-      required: true
-  - type: input
-    id: contact_email
-    attributes:
-      label: "Business Contact Email"
-      placeholder: "e.g. ops@acmedigital.com"
-    validations:
-      required: true
-  - type: dropdown
-    id: platform
-    attributes:
-      label: "Primary E-Commerce Platform"
-      options:
-        - "Shopify / Shopify Plus"
-        - "WooCommerce"
-        - "Amazon / TikTok Shop"
-        - "Taobao / Tmall / Douyin"
-        - "Custom ERP / Multi-channel"
-    validations:
-      required: true
+        This issue is PUBLIC. Do not post email addresses, customer or business data,
+        attachments, credentials, or private links. Private intake is closed until an
+        authorized mailbox is configured. Scope, price and timeline follow sample review.
   - type: textarea
-    id: data_source
+    id: question
     attributes:
-      label: "Data Link or Attachment Details"
-      description: "Attach your CSV/Excel file directly to this issue or paste a shared Google Drive/Dropbox link"
-      placeholder: "Google Drive link or drag & drop your sample CSV here..."
+      label: "Non-sensitive question"
+      description: "Describe the report you need without real operating data."
     validations:
       required: true

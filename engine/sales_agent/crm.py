@@ -7,11 +7,13 @@ import os
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
-DB_PATH = "data/crm.sqlite3"
+DB_PATH = os.environ.get("AUTOECOM_DB_PATH", os.path.expanduser("~/Library/Application Support/AutoEcom/crm.sqlite3"))
 
 def get_db_connection():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    os.chmod(os.path.dirname(DB_PATH), 0o700)
     conn = sqlite3.connect(DB_PATH)
+    os.chmod(DB_PATH, 0o600)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -91,6 +93,6 @@ class LeadManager:
         conn = get_db_connection()
         cursor = conn.cursor()
         now = datetime.now().isoformat()
-        cursor.execute("UPDATE leads SET revenue_collected = revenue_collected + ?, currency = ?, status = 'WON', updated_at = ? WHERE id = ?", (amount, currency, now, lead_id))
+        cursor.execute("UPDATE leads SET revenue_collected = revenue_collected + ?, currency = ?, status = 'PAYMENT_UNVERIFIED', updated_at = ? WHERE id = ?", (amount, currency, now, lead_id))
         conn.commit()
         conn.close()

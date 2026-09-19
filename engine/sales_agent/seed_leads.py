@@ -1,5 +1,5 @@
 """
-Populate the CRM database with verified target e-commerce agencies and auto-generate personalized pitches.
+Populate the CRM database with unverified candidate agencies and auto-generate personalized pitches.
 """
 from engine.sales_agent.crm import init_crm_db, LeadManager
 from engine.sales_agent.pitch_generator import PitchGenerator
@@ -101,7 +101,7 @@ def seed_database():
             **l,
             "personalized_subject": pitch["subject"],
             "personalized_body": pitch["body"],
-            "status": "PITCH_READY"
+            "status": "UNVERIFIED_CANDIDATE"
         }
         lead_id = LeadManager.add_lead(lead_record)
         print(f"Seeded Lead #{lead_id}: {l['company_name']} ({l['contact_email']}) -> PITCH_READY")

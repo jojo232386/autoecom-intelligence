@@ -7,6 +7,7 @@ Features:
 - Order status filtering (separates paid transactions from cancellations)
 """
 import csv
+import math
 import re
 from datetime import datetime
 from typing import List, Dict, Tuple, Any, Optional
@@ -59,6 +60,14 @@ def clean_currency_str(val: Any) -> float:
     except ValueError:
         return 0.0
 
+def optional_number(value):
+    if value is None or not str(value).strip():
+        return None
+    result = float(str(value).replace(",", "").replace("¥", "").strip())
+    if not math.isfinite(result) or result < 0:
+        raise ValueError("Invalid nonnegative numeric field")
+    return result
+
 def parse_date_str(val: Any) -> Tuple[str, str]:
     """Returns (YYYY-MM-DD, YYYY-MM-DD HH:MM:SS)"""
     if not val:
@@ -91,13 +100,6 @@ def map_headers(file_headers: List[str], alias_dict: Dict[str, List[str]]) -> Di
                 mapping[standard_key] = normalized_headers[alias_lower]
                 found = True
                 break
-        if not found:
-            # Check partial contains
-            for raw_lower, raw_orig in normalized_headers.items():
-                if any(a.lower() in raw_lower for a in aliases):
-                    mapping[standard_key] = raw_orig
-                    found = True
-                    break
     return mapping
 
 class DataCleaner:
@@ -110,46 +112,55 @@ class DataCleaner:
             reader = csv.DictReader(f)
             header_map = map_headers(reader.fieldnames or [], HEADER_ALIASES)
             
+            required = {"order_id", "order_time", "sku_id", "quantity", "gross_amount", "refund_amount", "order_status"}
+            if not required.issubset(header_map):
+                raise ValueError("Missing required order columns")
+            seen = set()
             for row in reader:
+                if None in row:
+                    raise ValueError("Malformed CSV row")
                 stats["total_rows"] += 1
                 
                 order_id = str(row.get(header_map.get("order_id", ""), "")).strip()
                 raw_time = row.get(header_map.get("order_time", ""), "")
+                if not raw_time or not re.fullmatch(r"\d{4}[-/]\d{1,2}[-/]\d{1,2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?", raw_time.strip()):
+                    raise ValueError("Invalid order date")
                 order_date, order_time = parse_date_str(raw_time)
+                datetime.strptime(order_date, "%Y-%m-%d")
                 
                 sku_id = str(row.get(header_map.get("sku_id", ""), "")).strip()
                 sku_name = str(row.get(header_map.get("sku_name", ""), "")).strip()
                 category = str(row.get(header_map.get("category", ""), "")).strip() or "默认品类"
                 
-                try:
-                    quantity = max(1, int(float(row.get(header_map.get("quantity", "1"), 1) or 1)))
-                except (ValueError, TypeError):
-                    quantity = 1
-                    
-                gross_amount = clean_currency_str(row.get(header_map.get("gross_amount", ""), 0.0))
-                refund_amount = clean_currency_str(row.get(header_map.get("refund_amount", ""), 0.0))
-                
+                quantity = optional_number(row.get(header_map["quantity"]))
+                gross_amount = optional_number(row.get(header_map["gross_amount"]))
+                refund_amount = optional_number(row.get(header_map["refund_amount"]))
+                if quantity is None or quantity < 1 or quantity != int(quantity) or gross_amount is None or refund_amount is None:
+                    raise ValueError("Missing or invalid quantity/amount/refund")
+                quantity = int(quantity)
+                identity = (order_id, sku_id)
+                if not order_id or not sku_id or identity in seen:
+                    raise ValueError("Missing or duplicate order/SKU identity")
+                seen.add(identity)
+
                 order_status = str(row.get(header_map.get("order_status", ""), "")).strip()
                 refund_status = str(row.get(header_map.get("refund_status", ""), "")).strip() or "无退款"
                 province = str(row.get(header_map.get("province", ""), "")).strip() or "其他"
                 
+                if order_status.lower() not in {"paid", "completed", "shipped", "refunded", "交易成功", "交易完成", "买家已付款", "卖家已发货", "已完成", "已支付", "待发货", "已发货", "未付款", "已关闭", "已取消", "closed", "canceled", "unpaid", "等待买家付款", "交易关闭", "已关闭(买家未付款)"}:
+                    raise ValueError("Unrecognized order status")
                 # Check unpaid / canceled orders
-                unpaid_keywords = ["未付款", "已关闭", "已取消", "closed", "canceled", "unpaid"]
+                unpaid_keywords = ["未付款", "已关闭", "已取消", "closed", "canceled", "unpaid", "等待买家付款", "交易关闭"]
                 if any(kw in order_status.lower() for kw in unpaid_keywords):
                     stats["filtered_unpaid"] += 1
                     continue
                 
-                # Handle refund consistency
-                is_refunded = False
-                refund_keywords = ["退款", "全额退款", "售后退款", "已退款", "refunded"]
-                if any(kw in refund_status.lower() for kw in refund_keywords) and refund_status != "无退款":
-                    is_refunded = True
-                    if refund_amount <= 0.0:
-                        refund_amount = gross_amount
+                # The numeric refund is authoritative; pending/refund words do not imply full refund.
+                if refund_amount < 0 or refund_amount > gross_amount:
+                    raise ValueError("Refund outside order amount")
+                if refund_amount > 0:
                     stats["refunded_orders"] += 1
-                else:
-                    refund_amount = 0.0
-                    
+
                 net_amount = max(0.0, round(gross_amount - refund_amount, 2))
                 stats["paid_orders"] += 1
                 
@@ -179,6 +190,8 @@ class DataCleaner:
             reader = csv.DictReader(f)
             header_map = map_headers(reader.fieldnames or [], ADS_HEADER_ALIASES)
             
+            if not {"date", "campaign_id", "spend", "direct_gmv"}.issubset(header_map):
+                raise ValueError("Missing advertising columns")
             for row in reader:
                 raw_date = row.get(header_map.get("date", ""), "")
                 ad_date, _ = parse_date_str(raw_date)
@@ -186,7 +199,9 @@ class DataCleaner:
                 cmp_name = str(row.get(header_map.get("campaign_name", ""), "")).strip()
                 target_sku = str(row.get(header_map.get("target_sku", ""), "")).strip()
                 
-                spend = clean_currency_str(row.get(header_map.get("spend", ""), 0.0))
+                spend = optional_number(row.get(header_map["spend"]))
+                if spend is None:
+                    raise ValueError("Missing ad spend")
                 try:
                     impressions = int(float(row.get(header_map.get("impressions", "0"), 0) or 0))
                 except (ValueError, TypeError):
@@ -195,7 +210,9 @@ class DataCleaner:
                     clicks = int(float(row.get(header_map.get("clicks", "0"), 0) or 0))
                 except (ValueError, TypeError):
                     clicks = 0
-                direct_gmv = clean_currency_str(row.get(header_map.get("direct_gmv", ""), 0.0))
+                direct_gmv = optional_number(row.get(header_map["direct_gmv"]))
+                if direct_gmv is None:
+                    raise ValueError("Missing attributed sales")
                 cpc = round(spend / clicks, 2) if clicks > 0 else 0.0
                 
                 records.append(CleanedAdRecord(
@@ -223,17 +240,12 @@ class DataCleaner:
                 name = str(row.get(header_map.get("name", ""), "")).strip()
                 category = str(row.get(header_map.get("category", ""), "")).strip()
                 price = clean_currency_str(row.get(header_map.get("price", ""), 0.0))
-                cost = clean_currency_str(row.get(header_map.get("cost", ""), 0.0))
-                
-                try:
-                    stock = int(float(row.get(header_map.get("stock", "0"), 0) or 0))
-                except (ValueError, TypeError):
-                    stock = 0
-                try:
-                    safety_stock = int(float(row.get(header_map.get("safety_stock", "20"), 20) or 20))
-                except (ValueError, TypeError):
-                    safety_stock = 20
-                    
+                cost = optional_number(row.get(header_map.get("cost", "")))
+                stock = optional_number(row.get(header_map.get("stock", "")))
+                safety_stock = optional_number(row.get(header_map.get("safety_stock", "")))
+
+                if not sku_id or sku_id in items:
+                    raise ValueError("Missing or duplicate inventory SKU")
                 items[sku_id] = InventoryItem(
                     sku_id=sku_id,
                     name=name,

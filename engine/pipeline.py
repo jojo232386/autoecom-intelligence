@@ -39,6 +39,9 @@ class IntelligencePipeline:
         
         orders, order_stats = DataCleaner.clean_orders(self.orders_path)
         
+        for optional_path in (self.ads_path, self.inventory_path):
+            if optional_path and not os.path.isfile(optional_path):
+                raise FileNotFoundError("Provided input missing")
         ads = []
         if self.ads_path and os.path.exists(self.ads_path):
             ads = DataCleaner.clean_ads(self.ads_path)

@@ -8,6 +8,23 @@ Generates:
 import os
 import json
 from datetime import datetime
+from copy import deepcopy
+from dataclasses import fields, is_dataclass
+from html import escape
+
+def display(value, spec=""):
+    return "N/A（未提供或口径不足）" if value is None else format(value, spec)
+
+def escaped(value):
+    if is_dataclass(value):
+        value = deepcopy(value)
+        for field in fields(value):
+            setattr(value, field.name, escaped(getattr(value, field.name)))
+        return value
+    if isinstance(value, list):
+        return [escaped(v) for v in value]
+    return escape(value) if isinstance(value, str) else value
+
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -22,6 +39,8 @@ class ReportGenerator:
         output_path: str,
         agency_name: str = "代运营白牌数字化交付中心"
     ) -> str:
+        summary = escaped(summary)
+        agency_name = escape(agency_name)
         # Build SVG daily trend bars
         max_gmv = max((d.gmv for d in summary.daily_metrics), default=1.0)
         daily_bars = []
@@ -84,7 +103,7 @@ class ReportGenerator:
   }}
   .badge-agency {{ background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }}
   .badge-audit {{ background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }}
-  
+
   /* KPI Grid */
   .kpi-grid {{
     display: grid;
@@ -116,7 +135,7 @@ class ReportGenerator:
     margin-bottom: 24px;
   }}
   @media (max-width: 900px) {{ .grid-2 {{ grid-template-columns: 1fr; }} }}
-  
+
   .card {{
     background: var(--card);
     border: 1px solid var(--border);
@@ -203,12 +222,12 @@ class ReportGenerator:
     color: var(--text-main);
   }}
   tr:hover td {{ background: rgba(255, 255, 255, 0.02); }}
-  
+
   .tag-gold {{ background: rgba(245, 158, 11, 0.2); color: #fbbf24; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
   .tag-green {{ background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
   .tag-red {{ background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
   .tag-gray {{ background: rgba(156, 163, 175, 0.2); color: #9ca3af; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }}
-  
+
   .footer {{
     text-align: center;
     font-size: 12px;
@@ -233,14 +252,14 @@ class ReportGenerator:
     <div class="header-left">
       <h1>📊 {summary.store_name} 经营分析周报</h1>
       <div class="meta">
-        统计周期：<strong>{summary.period_start} 至 {summary.period_end}</strong> ({summary.period_label}) &nbsp;|&nbsp; 
-        订单总数：{summary.total_orders:,} 笔 &nbsp;|&nbsp; 
+        统计周期：<strong>{summary.period_start} 至 {summary.period_end}</strong> ({summary.period_label}) &nbsp;|&nbsp;
+        订单总数：{summary.total_orders:,} 笔 &nbsp;|&nbsp;
         售出件数：{summary.total_units:,} 件
       </div>
     </div>
     <div class="header-right" style="text-align: right;">
       <span class="badge badge-agency">🏛️ {agency_name}</span>
-      <span class="badge badge-audit">✅ 会计级勾稽自检 100% 通过</span>
+      <span class="badge badge-audit">✅ 算术勾稽检查：{ "PASS" if audit.passed else "FAIL" }；缺失项见说明</span>
       <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">生成时间: {audit.checked_at}</div>
     </div>
   </div>
@@ -249,33 +268,33 @@ class ReportGenerator:
   <div class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-title">总成交额 (GMV)</div>
-      <div class="kpi-value text-blue">¥{summary.total_gmv:,.2f}</div>
+      <div class="kpi-value text-blue">¥{display(summary.total_gmv, ",.2f")} </div>
       <div class="kpi-sub text-muted">有效支付订单总额</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-title">净销售额 (Net Sales)</div>
-      <div class="kpi-value text-green">¥{summary.total_net_sales:,.2f}</div>
+      <div class="kpi-value text-green">¥{display(summary.total_net_sales, ",.2f")} </div>
       <div class="kpi-sub text-muted">扣除退款后实际营收</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-title">退款总额 / 退款率</div>
-      <div class="kpi-value {'text-red' if summary.refund_rate_pct > 15 else 'text-yellow'}">¥{summary.total_refunds:,.2f}</div>
-      <div class="kpi-sub {'text-red' if summary.refund_rate_pct > 15 else 'text-muted'}">退款率: <strong>{summary.refund_rate_pct:.1f}%</strong></div>
+      <div class="kpi-value {'text-red' if summary.refund_rate_pct > 15 else 'text-yellow'}">¥{display(summary.total_refunds, ",.2f")} </div>
+      <div class="kpi-sub {'text-red' if summary.refund_rate_pct > 15 else 'text-muted'}">退款率: <strong>{display(summary.refund_rate_pct, ".1f")} %</strong></div>
     </div>
     <div class="kpi-card">
       <div class="kpi-title">全域推广消耗 (Ad Spend)</div>
-      <div class="kpi-value">¥{summary.total_ad_spend:,.2f}</div>
+      <div class="kpi-value">¥{display(summary.total_ad_spend, ",.2f")} </div>
       <div class="kpi-sub text-muted">万相台/直通车/千川汇总</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-title">综合投产比 (Blended ROI)</div>
-      <div class="kpi-value {'text-green' if summary.blended_roi >= 3.5 else 'text-yellow'}">{summary.blended_roi:.2f}</div>
+      <div class="kpi-value {'text-green' if summary.blended_roi is not None and summary.blended_roi >= 3.5 else 'text-yellow'}">{display(summary.blended_roi, ".2f")} </div>
       <div class="kpi-sub text-muted">全店GMV / 推广总消耗</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-title">估算商品毛利 / 毛利率</div>
-      <div class="kpi-value text-green">¥{summary.gross_profit:,.2f}</div>
-      <div class="kpi-sub text-green">综合毛利率: <strong>{summary.gross_profit_margin_pct:.1f}%</strong></div>
+      <div class="kpi-title">估算商品广告后贡献利润 / 广告后贡献利润率</div>
+      <div class="kpi-value text-green">¥{display(summary.gross_profit, ",.2f")} </div>
+      <div class="kpi-sub text-green">综合广告后贡献利润率: <strong>{display(summary.gross_profit_margin_pct, ".1f")} %</strong></div>
     </div>
   </div>
 
@@ -309,7 +328,7 @@ class ReportGenerator:
         <div class="bar-value">¥{int(b['gmv']):,}</div>
         <div class="bar-shape" style="height: {b['height']}px;"></div>
         <div class="bar-label">{b['date']}</div>
-        <div style="font-size: 10px; color: var(--text-muted);">ROI {b['roi']:.1f}</div>
+        <div style="font-size: 10px; color: var(--text-muted);">ROI {display(b['roi'], ".1f")} </div>
       </div>''' for b in daily_bars)}
     </div>
   </div>
@@ -329,7 +348,7 @@ class ReportGenerator:
             <th>退款率</th>
             <th>推广消耗</th>
             <th>直投产ROI</th>
-            <th>预估毛利率</th>
+            <th>预估广告后贡献利润率</th>
             <th>当前库存</th>
             <th>象限分类</th>
             <th>异常提示</th>
@@ -342,12 +361,12 @@ class ReportGenerator:
             <td><strong>{s.name}</strong></td>
             <td>{s.category}</td>
             <td>{s.units_sold}</td>
-            <td>¥{s.gmv:,.2f}</td>
-            <td class="{'text-red' if s.refund_rate_pct > 20 else ''}">{s.refund_rate_pct:.1f}%</td>
-            <td>¥{s.ad_spend:,.2f}</td>
-            <td>{s.direct_roi:.2f}</td>
-            <td class="text-green">{s.gross_margin_pct:.1f}%</td>
-            <td class="{'text-red' if s.current_stock <= s.safety_stock else ''}">{s.current_stock}件</td>
+            <td>¥{display(s.gmv, ",.2f")} </td>
+            <td class="{'text-red' if s.refund_rate_pct > 20 else ''}">{display(s.refund_rate_pct, ".1f")} %</td>
+            <td>¥{display(s.ad_spend, ",.2f")} </td>
+            <td>{display(s.direct_roi, ".2f")} </td>
+            <td class="text-green">{display(s.gross_margin_pct, ".1f")} %</td>
+            <td class="{'text-red' if s.current_stock is not None and s.safety_stock is not None and s.current_stock <= s.safety_stock else ''}">{display(s.current_stock)}件</td>
             <td><span class="{'tag-gold' if s.quadrant_tag == '现金金牛' else ('tag-green' if s.quadrant_tag == '潜力爆品' else ('tag-red' if s.quadrant_tag in ('吸血亏损', '退款隐患') else 'tag-gray'))}">{s.quadrant_tag}</span></td>
             <td style="font-size: 11px; color: var(--warning);">{'; '.join(s.alert_flags) if s.alert_flags else '—'}</td>
           </tr>''' for s in summary.sku_metrics)}
@@ -398,13 +417,13 @@ class ReportGenerator:
   <div class="card" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
     <div class="card-title" style="color: #34d399;">🔒 物理闭环勾稽对账验证结果 (Audit Trail)</div>
     <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-      本报告经由会计级平衡方程式物理核验，杜绝任何大模型幻觉与人工抄录错漏。
+      仅核验已提供数据的算术一致性；不验证来源真实性、退货或到账。
     </div>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; font-size: 12px;">
       {''.join(f'''
       <div style="padding: 8px 12px; background: rgba(0,0,0,0.3); border-radius: 6px;">
-        <span style="color: #34d399;">✓ PASS</span> &nbsp;
-        <strong>{k}</strong>: 误差 = {v.get('diff', 0)}
+        <span>{"PASS" if v["passed"] else "FAIL"}</span> &nbsp;
+        <strong>{k}</strong>: 误差 = {v.get('diff', 'N/A')}
       </div>''' for k, v in audit.checks.items())}
     </div>
   </div>
@@ -457,20 +476,20 @@ class ReportGenerator:
         ws1.views.sheetView[0].showGridLines = True
         ws1["A1"] = f"【{summary.store_name}】电商经营分析周报"
         ws1["A1"].font = Font(name="微软雅黑", size=16, bold=True, color="1E3A8A")
-        ws1["A2"] = f"周期: {summary.period_start} ~ {summary.period_end} ({summary.period_label}) | 白牌交付: {agency_name} | 勾稽质检: 100% PASS"
+        ws1["A2"] = f"周期: {summary.period_start} ~ {summary.period_end} ({summary.period_label}) | 白牌交付: {agency_name} | 勾稽质检: {audit.passed}"
         ws1["A2"].font = Font(name="微软雅黑", size=10, color="4B5563")
 
         kpi_rows = [
             ("核心经营指标", "数值", "说明 / 行业参考"),
             ("总成交额 (GMV)", summary.total_gmv, "有效支付订单总额"),
             ("退款总额", summary.total_refunds, "售后退款及退款中总额"),
-            ("综合退款率", f"{summary.refund_rate_pct:.2f}%", "女装行业均值 15%~25%"),
-            ("净销售额 (Net Sales)", summary.total_net_sales, "扣除退款后实际到账"),
+            ("综合退款率", f"{display(summary.refund_rate_pct, ".2f")} %", "女装行业均值 15%~25%"),
+            ("净销售额 (Net Sales)", summary.total_net_sales, "订单额减退款，非到账"),
             ("全店推广总消耗", summary.total_ad_spend, "直通车/万相台/引力魔方/千川"),
             ("全店综合投产比 (Blended ROI)", summary.blended_roi, "GMV / 推广总花费"),
             ("估算商品采购成本 (COGS)", summary.total_cogs, "已发货成交净件数对应成本"),
-            ("预估毛利润 (Gross Profit)", summary.gross_profit, "净销售 - 成本 - 推广消耗"),
-            ("预估综合毛利率", f"{summary.gross_profit_margin_pct:.2f}%", "毛利润 / 净销售额"),
+            ("预估广告后贡献利润 (Contribution after ads)", summary.gross_profit, "净销售 - 成本 - 推广消耗"),
+            ("预估综合广告后贡献利润率", f"{display(summary.gross_profit_margin_pct, ".2f")} %", "广告后贡献利润 / 净销售额"),
             ("有效支付订单数", summary.total_orders, "单量"),
             ("有效支付总件数", summary.total_units, "件数"),
         ]
@@ -505,7 +524,7 @@ class ReportGenerator:
 
         # ----------------- Sheet 2: 每日明细对账 -----------------
         ws2 = wb.create_sheet(title="每日明细对账_Daily")
-        headers_daily = ["日期", "订单数", "销量(件)", "成交额(GMV)", "退款额", "净销售额", "推广花费", "引导成交", "综合ROI", "毛利润", "毛利率"]
+        headers_daily = ["日期", "订单数", "销量(件)", "成交额(GMV)", "退款额", "净销售额", "推广花费", "引导成交", "综合ROI", "广告后贡献利润", "广告后贡献利润率"]
         for col_idx, h in enumerate(headers_daily, 1):
             cell = ws2.cell(row=1, column=col_idx, value=h)
             cell.font = font_header
@@ -529,7 +548,7 @@ class ReportGenerator:
             ws2.cell(row=r_idx, column=9, value=d.blended_roi).number_format = "0.00"
             c_pro = ws2.cell(row=r_idx, column=10, value=d.gross_profit)
             c_pro.number_format = "¥#,##0.00"
-            ws2.cell(row=r_idx, column=11, value=f"{d.profit_margin_pct:.1f}%").alignment = align_right
+            ws2.cell(row=r_idx, column=11, value=f"{display(d.profit_margin_pct, ".1f")} %").alignment = align_right
 
             for col in range(1, 12):
                 ws2.cell(row=r_idx, column=col).border = border_thin
@@ -537,7 +556,7 @@ class ReportGenerator:
 
         # ----------------- Sheet 3: SKU经营透视 -----------------
         ws3 = wb.create_sheet(title="SKU经营透视_Products")
-        headers_sku = ["SKU编码", "商品名称", "类目", "订单数", "销量", "GMV", "退款额", "退款率", "推广花费", "直投产ROI", "预估毛利", "毛利率", "当前库存", "象限分类", "异常预警"]
+        headers_sku = ["SKU编码", "商品名称", "类目", "订单数", "销量", "GMV", "退款额", "退款率", "推广花费", "直投产ROI", "预估广告后贡献利润", "广告后贡献利润率", "当前库存", "象限分类", "异常预警"]
         for col_idx, h in enumerate(headers_sku, 1):
             cell = ws3.cell(row=1, column=col_idx, value=h)
             cell.font = font_header
@@ -552,11 +571,11 @@ class ReportGenerator:
             ws3.cell(row=r_idx, column=5, value=s.units_sold).alignment = align_right
             ws3.cell(row=r_idx, column=6, value=s.gmv).number_format = "¥#,##0.00"
             ws3.cell(row=r_idx, column=7, value=s.refund_amount).number_format = "¥#,##0.00"
-            ws3.cell(row=r_idx, column=8, value=f"{s.refund_rate_pct:.1f}%").alignment = align_right
+            ws3.cell(row=r_idx, column=8, value=f"{display(s.refund_rate_pct, ".1f")} %").alignment = align_right
             ws3.cell(row=r_idx, column=9, value=s.ad_spend).number_format = "¥#,##0.00"
             ws3.cell(row=r_idx, column=10, value=s.direct_roi).number_format = "0.00"
             ws3.cell(row=r_idx, column=11, value=s.gross_profit).number_format = "¥#,##0.00"
-            ws3.cell(row=r_idx, column=12, value=f"{s.gross_margin_pct:.1f}%").alignment = align_right
+            ws3.cell(row=r_idx, column=12, value=f"{display(s.gross_margin_pct, ".1f")} %").alignment = align_right
             ws3.cell(row=r_idx, column=13, value=s.current_stock).alignment = align_right
             ws3.cell(row=r_idx, column=14, value=s.quadrant_tag).alignment = align_center
             ws3.cell(row=r_idx, column=15, value="; ".join(s.alert_flags) if s.alert_flags else "—").alignment = align_left
@@ -629,6 +648,13 @@ class ReportGenerator:
                 sheet.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 40)
 
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        for sheet in wb.worksheets:
+            for row in sheet:
+                for cell in row:
+                    if cell.value is None:
+                        cell.value = "N/A"
+                    elif isinstance(cell.value, str) and cell.value.startswith(("=", "+", "-", "@")):
+                        cell.value = "'" + cell.value
         wb.save(output_path)
         return output_path
 
@@ -640,17 +666,17 @@ class ReportGenerator:
         agency_name: str = "代运营白牌数字化中心"
     ) -> str:
         md = f"""# 📢 【经营周报速递】{summary.store_name} ({summary.period_label})
-> 交付机构：{agency_name} &nbsp;|&nbsp; 质检状态：✅ 会计级勾稽自检 100% 通过 ({audit.checked_at})
+> 交付机构：{agency_name} &nbsp;|&nbsp; 质检状态：✅ 算术勾稽检查：{ "PASS" if audit.passed else "FAIL" }；缺失项见说明 ({audit.checked_at})
 
 ---
 
 ### 一、 核心大盘战绩
-- **总成交金额 (GMV)**：**¥{summary.total_gmv:,.2f}**（共 {summary.total_orders} 笔订单，售出 {summary.total_units} 件）
-- **净销售实收 (Net Sales)**：**¥{summary.total_net_sales:,.2f}**
-- **退款总额 / 退款率**：¥{summary.total_refunds:,.2f}（退款率 **{summary.refund_rate_pct:.1f}%**）
-- **推广总花费 (Ad Spend)**：¥{summary.total_ad_spend:,.2f}
-- **全店综合投产比 (Blended ROI)**：**{summary.blended_roi:.2f}**
-- **预估商品毛利润**：**¥{summary.gross_profit:,.2f}**（毛利率 **{summary.gross_profit_margin_pct:.1f}%**）
+- **总成交金额 (GMV)**：**¥{display(summary.total_gmv, ",.2f")} **（共 {summary.total_orders} 笔订单，售出 {summary.total_units} 件）
+- **净销售额 (Net Sales)**：**¥{display(summary.total_net_sales, ",.2f")} **
+- **退款总额 / 退款率**：¥{display(summary.total_refunds, ",.2f")} （退款率 **{display(summary.refund_rate_pct, ".1f")} %**）
+- **推广总花费 (Ad Spend)**：¥{display(summary.total_ad_spend, ",.2f")}
+- **全店综合投产比 (Blended ROI)**：**{display(summary.blended_roi, ".2f")} **
+- **预估商品广告后贡献利润**：**¥{display(summary.gross_profit, ",.2f")} **（广告后贡献利润率 **{display(summary.gross_profit_margin_pct, ".1f")} %**）
 
 ---
 

@@ -5,6 +5,7 @@ Drop raw CSV -> Auto Pipeline -> Auto Audit -> Auto Packaged Deliverables.
 """
 import os
 import shutil
+import hashlib
 from datetime import datetime
 from typing import List, Dict, Any
 from engine.pipeline import IntelligencePipeline
@@ -21,7 +22,7 @@ class DropWatcher:
         os.makedirs(DELIVERABLES_ROOT, exist_ok=True)
 
         results = []
-        files = [f for f in os.listdir(INCOMING_DIR) if f.endswith(".csv") or f.endswith(".xlsx")]
+        files = [f for f in os.listdir(INCOMING_DIR) if f.endswith(".csv") and not os.path.islink(os.path.join(INCOMING_DIR, f))]
 
         if not files:
             return []
@@ -30,7 +31,8 @@ class DropWatcher:
             fpath = os.path.join(INCOMING_DIR, fname)
             client_id = os.path.splitext(fname)[0].replace("_orders", "").replace("_export", "")
             store_name = client_id.replace("_", " ").title()
-            client_output_dir = os.path.join(DELIVERABLES_ROOT, client_id)
+            job_id = hashlib.sha256(open(fpath, "rb").read()).hexdigest()
+            client_output_dir = os.path.join(DELIVERABLES_ROOT, client_id, job_id)
 
             print(f"⚡ Auto-processing dropped data for client [{store_name}] from {fname}...")
 
@@ -49,9 +51,9 @@ class DropWatcher:
                 shutil.move(fpath, archive_path)
                 res["archived_raw"] = archive_path
                 results.append(res)
-                print(f"✅ Successfully auto-delivered for [{store_name}] into {client_output_dir} (diff=0.0 verified)")
+                print(f"✅ Generated locally; review required for [{store_name}] into {client_output_dir} (diff=0.0 verified)")
             except Exception as e:
-                print(f"❌ Auto-delivery failed for {fname}: {e}")
+                print(f"❌ Local processing failed for {fname}: {e}")
                 results.append({"status": "FAILED", "file": fname, "error": str(e)})
 
         return results

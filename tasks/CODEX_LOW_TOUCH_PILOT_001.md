@@ -1,6 +1,22 @@
 # CODEX_LOW_TOUCH_PILOT_001
 
-状态：REQUESTED，尚未确认 Codex 接单。工程接管任务，不是已成交或已完成的商业结果。
+状态：OFFLINE_ENGINEERING_VALIDATED / BLOCKED_EXTERNAL。current_owner=Codex。商业目标 OPEN。
+
+## 2026-09-19 执行证据
+
+- 基线提交：52b1e6b95d1796e7d6c795cb1bf89e45d4cdd462；独立 worktree 执行，AGY main 及未提交数据保留。
+- 原有测试：`python -m pytest -q` → `11 passed in 0.28s`。
+- 修复后：`python -m pytest -q` → `36 passed in 0.56s`。新增 25 个用例（参数化计数），原测试改用隔离 CRM 和合成输入；旧利润/报价承诺断言按修正语义更新。
+- 静态检查：`python -m compileall -q engine pilot_cli.py cli.py agent_sales.py`、`git diff --check` 通过。
+- 本地真实执行：`python cli.py --out data/cli-smoke` 成功生成四份合成交付件；公开 demo 从确定性合成数据重新生成。
+- 模拟测试：IMAP 只读收件、SMTP 接受/拒绝/超时、去重与进程重启、部分退款、缺成本/广告/库存、显式零、客户隔离、退订、审核失败、改件阻断、CSV 公式及 HTML 转义。没有连接真实邮箱；不构成供应商实测或送达证据。
+- 私有 CRM 使用 SQLite backup API 备份后从分支 index 移除；本机原件与备份保留。旧 Git 历史及 main 公开版本仍可能包含旧数据，本轮未重写历史、未发布 main。
+- 收入录入改为 PAYMENT_UNVERIFIED；既有 CRM 仅 8 条 PITCH_READY，未发现非零收款声明。并非真实客户数量。
+- 外部状态：全部 PILOT 邮箱与收件人授权变量未配置；真实发送 0、真实收件 0、送达/验收/到账无证据。没有购买付费服务；模型订阅分摊成本未知。
+- 首批最多两家官网核验，仅一封询问草稿待授权；没有已验证购买需求。草稿、来源、核验时间和最小授权清单保存在本机私有运行目录，不发布联系人运行记录。
+- 限制：仅约定 UTF-8 CSV；首单必须审核，自动交付白名单未启用；只支持手动单轮收件（最近 100 封），未启用持续监听；SMTP_ACCEPTED 不等于 DELIVERED；未知发送状态须供应商对账，禁止盲重试。退货成本规则缺失时仅交付可核对销售/退款指标。
+- 下一步：本地配置授权邮箱与 TEST 收发对象后做一次端到端联调；商业外发需批准具体单封草稿及身份信息，收费前需收款渠道和双方确认范围。工程通过不等于 GOAL_COMPLETE。
+
 工作分支：`codex/low-touch-pilot-001`。禁止直接修改 main、强推或操作其他项目。
 
 ## 目标与接管
