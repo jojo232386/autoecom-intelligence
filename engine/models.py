@@ -39,9 +39,9 @@ class InventoryItem:
     name: str
     category: str
     price: float
-    cost: float
-    stock: int
-    safety_stock: int
+    cost: Optional[float]
+    stock: Optional[int]
+    safety_stock: Optional[int]
 
 @dataclass
 class SKUMetrics:
@@ -54,14 +54,14 @@ class SKUMetrics:
     refund_amount: float
     net_sales: float
     refund_rate_pct: float
-    ad_spend: float
-    direct_ad_gmv: float
-    direct_roi: float
-    estimated_cogs: float
-    gross_profit: float
-    gross_margin_pct: float
-    current_stock: int
-    safety_stock: int
+    ad_spend: Optional[float]
+    direct_ad_gmv: Optional[float]
+    direct_roi: Optional[float]
+    estimated_cogs: Optional[float]
+    gross_profit: Optional[float]
+    gross_margin_pct: Optional[float]
+    current_stock: Optional[int]
+    safety_stock: Optional[int]
     stock_turnover_status: str
     quadrant_tag: str        # '现金金牛', '潜力爆品', '吸血亏损', '平销防守'
     alert_flags: List[str] = field(default_factory=list)
@@ -74,11 +74,11 @@ class DailyMetrics:
     gmv: float
     refunds: float
     net_sales: float
-    ad_spend: float
-    direct_ad_gmv: float
-    blended_roi: float
-    gross_profit: float
-    profit_margin_pct: float
+    ad_spend: Optional[float]
+    direct_ad_gmv: Optional[float]
+    blended_roi: Optional[float]
+    gross_profit: Optional[float]
+    profit_margin_pct: Optional[float]
 
 @dataclass
 class CampaignMetrics:
@@ -91,7 +91,7 @@ class CampaignMetrics:
     overall_cpc: float
     overall_ctr_pct: float
     direct_gmv: float
-    direct_roi: float
+    direct_roi: Optional[float]
     status_tag: str          # '高效放量', '维持观察', '控比压减'
 
 @dataclass
@@ -116,12 +116,12 @@ class StoreSummary:
     total_refunds: float
     refund_rate_pct: float
     total_net_sales: float
-    total_ad_spend: float
-    blended_roi: float
-    total_direct_ad_gmv: float
-    total_cogs: float
-    gross_profit: float
-    gross_profit_margin_pct: float
+    total_ad_spend: Optional[float]
+    blended_roi: Optional[float]
+    total_direct_ad_gmv: Optional[float]
+    total_cogs: Optional[float]
+    gross_profit: Optional[float]
+    gross_profit_margin_pct: Optional[float]
     daily_metrics: List[DailyMetrics] = field(default_factory=list)
     sku_metrics: List[SKUMetrics] = field(default_factory=list)
     campaign_metrics: List[CampaignMetrics] = field(default_factory=list)

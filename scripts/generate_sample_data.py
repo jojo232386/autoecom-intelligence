@@ -6,6 +6,8 @@ Includes:
 - inventory_cost.csv (COGS, available stock, category)
 """
 import csv
+from pathlib import Path
+Path("tests/fixtures").mkdir(parents=True, exist_ok=True)
 import random
 from datetime import datetime, timedelta
 
@@ -106,11 +108,11 @@ def generate_orders():
                 "收货省份": random.choice(PROVINCES),
             })
             
-    with open("data/raw_inputs/orders_export.csv", "w", encoding="utf-8-sig", newline="") as f:
+    with open("tests/fixtures/orders_export.csv", "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(orders[0].keys()))
         writer.writeheader()
         writer.writerows(orders)
-    print(f"Generated {len(orders)} orders into data/raw_inputs/orders_export.csv")
+    print(f"Generated {len(orders)} orders into tests/fixtures/orders_export.csv")
 
 def generate_ads():
     start_date = datetime(2026, 9, 8)
@@ -157,11 +159,11 @@ def generate_ads():
                 "直接引导成交金额(元)": direct_gmv,
             })
             
-    with open("data/raw_inputs/ads_spend_export.csv", "w", encoding="utf-8-sig", newline="") as f:
+    with open("tests/fixtures/ads_spend_export.csv", "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(ads[0].keys()))
         writer.writeheader()
         writer.writerows(ads)
-    print(f"Generated {len(ads)} ad campaign logs into data/raw_inputs/ads_spend_export.csv")
+    print(f"Generated {len(ads)} ad campaign logs into tests/fixtures/ads_spend_export.csv")
 
 def generate_inventory():
     rows = []
@@ -175,11 +177,11 @@ def generate_inventory():
             "当前可用库存(件)": s["stock"],
             "安全库存预警线": 50 if s["sku_id"] == "SKU-001" else 30
         })
-    with open("data/raw_inputs/inventory_cost.csv", "w", encoding="utf-8-sig", newline="") as f:
+    with open("tests/fixtures/inventory_cost.csv", "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
-    print(f"Generated {len(rows)} SKU inventory records into data/raw_inputs/inventory_cost.csv")
+    print(f"Generated {len(rows)} SKU inventory records into tests/fixtures/inventory_cost.csv")
 
 if __name__ == "__main__":
     generate_orders()

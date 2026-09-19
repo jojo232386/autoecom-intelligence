@@ -23,8 +23,10 @@ class OutreachDispatcher:
             raise ValueError(f"Lead ID {lead_id} not found")
 
         recipient = lead["contact_email"]
-        subject = lead["personalized_subject"]
-        body = lead["personalized_body"]
+        from engine.sales_agent.pitch_generator import PitchGenerator
+        pitch = PitchGenerator.generate_pitch(dict(lead))
+        subject = pitch["subject"]
+        body = pitch["body"]
 
         encoded_subject = urllib.parse.quote(subject)
         encoded_body = urllib.parse.quote(body)
@@ -36,7 +38,7 @@ class OutreachDispatcher:
     def stage_outreach_macos(lead_id: int) -> bool:
         """Opens the user's native mail client with the fully drafted, personalized pitch pre-filled."""
         cmd = OutreachDispatcher.get_mailto_command(lead_id)
-        res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        res = subprocess.run(["open", cmd[len('open "'):-1]], capture_output=True, text=True)
         if res.returncode == 0:
             LeadManager.update_lead_status(lead_id, "QUEUED", notes="Staged in macOS default mail client")
             return True
@@ -51,31 +53,29 @@ class OutreachDispatcher:
         sender_password: str,
         use_tls: bool = True
     ) -> bool:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM leads WHERE id = ?", (lead_id,))
-        lead = cursor.fetchone()
-        conn.close()
+        raise RuntimeError("Direct lead sending disabled: use reviewed pilot job with recipient authorization")
 
-        if not lead:
-            raise ValueError(f"Lead ID {lead_id} not found")
-
-        recipient = lead["contact_email"]
-        subject = lead["personalized_subject"]
-        body = lead["personalized_body"]
-
-        msg = MIMEMultipart()
-        msg["From"] = sender_email
-        msg["To"] = recipient
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body, "plain", "utf-8"))
-
-        server = smtplib.SMTP(smtp_host, smtp_port, timeout=15)
-        if use_tls:
+    @staticmethod
+    def send_message_smtp(msg, smtp_host, smtp_port, sender_email, sender_password):
+        """SMTP acceptance is not delivery. Only failures known to precede DATA are retryable."""
+        server = None
+        phase = 'CONNECT'
+        try:
+            server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
             server.starttls()
-        server.login(sender_email, sender_password)
-        server.send_message(msg)
-        server.quit()
-
-        LeadManager.update_lead_status(lead_id, "DISPATCHED", notes="Sent headlessly via SMTP")
-        return True
+            server.login(sender_email, sender_password)
+            phase = 'DATA'
+            refused = server.send_message(msg)
+            if refused:
+                return {'state': 'SEND_FAILED', 'evidence': 'recipient_refused', 'message_id': msg['Message-ID']}
+            return {'state': 'SMTP_ACCEPTED', 'evidence': 'SMTP send_message returned without refusal', 'message_id': msg['Message-ID']}
+        except (smtplib.SMTPRecipientsRefused, smtplib.SMTPDataError) as exc:
+            return {'state': 'SEND_FAILED', 'error_type': type(exc).__name__, 'message_id': msg['Message-ID']}
+        except Exception as exc:
+            return {'state': 'SEND_UNKNOWN' if phase == 'DATA' else 'SEND_FAILED', 'error_type': type(exc).__name__, 'message_id': msg['Message-ID']}
+        finally:
+            if server is not None:
+                try:
+                    server.close()
+                except Exception:
+                    pass

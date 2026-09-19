@@ -52,31 +52,21 @@ class QualityChecker:
         if not check_3:
             errors.append(f"SKU汇总勾稽校验失败: 总GMV({summary.total_gmv}) != SKU汇总({sku_gmv_sum})")
 
-        # 4. Checksum: Total Ad Spend vs Campaign Sum
-        campaign_spend_sum = round(sum(c.total_spend for c in summary.campaign_metrics), 2)
-        diff_spend = round(abs(summary.total_ad_spend - campaign_spend_sum), 2)
-        check_4 = diff_spend < 0.02
-        checks["ad_spend_vs_campaign_sum"] = {
-            "total_ad_spend": summary.total_ad_spend,
-            "campaign_spend_sum": campaign_spend_sum,
-            "diff": diff_spend,
-            "passed": check_4
-        }
-        if not check_4:
-            errors.append(f"推广花费勾稽校验失败: 总消耗({summary.total_ad_spend}) != 计划汇总({campaign_spend_sum})")
-
-        # 5. Checksum: Profit Equation Balance
-        expected_profit = round(summary.total_net_sales - summary.total_cogs - summary.total_ad_spend, 2)
-        diff_profit = round(abs(summary.gross_profit - expected_profit), 2)
-        check_5 = diff_profit < 0.02
-        checks["profit_equation"] = {
-            "gross_profit": summary.gross_profit,
-            "expected_profit": expected_profit,
-            "diff": diff_profit,
-            "passed": check_5
-        }
-        if not check_5:
-            errors.append(f"毛利勾稽校验失败: 毛利润({summary.gross_profit}) != 净销-成本-广告({expected_profit})")
+        if summary.total_ad_spend is None:
+            warnings.append("广告数据未提供，广告校验 N/A")
+        else:
+            valid = abs(summary.total_ad_spend - sum(c.total_spend for c in summary.campaign_metrics)) < .02
+            checks["ad_spend_vs_campaign_sum"] = {"passed": valid}
+            if not valid:
+                errors.append("广告汇总不一致")
+        if summary.gross_profit is None:
+            warnings.append("成本/退款成本规则/广告不足，利润校验 N/A")
+        else:
+            expected = summary.total_net_sales - summary.total_cogs - summary.total_ad_spend
+            valid = abs(summary.gross_profit - expected) < .02
+            checks["profit_equation"] = {"passed": valid}
+            if not valid:
+                errors.append("广告后贡献利润不一致")
 
         # 6. Non-negativity & Data Sanity
         if summary.total_orders <= 0:
@@ -85,7 +75,7 @@ class QualityChecker:
             errors.append("总 GMV 为负数")
         if summary.total_refunds < 0:
             errors.append("退款总额为负数")
-        if summary.total_ad_spend < 0:
+        if summary.total_ad_spend is not None and summary.total_ad_spend < 0:
             errors.append("推广消耗为负数")
 
         passed = len(errors) == 0

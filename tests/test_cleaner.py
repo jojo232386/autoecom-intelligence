@@ -34,7 +34,7 @@ def test_map_headers():
     assert mapped["order_status"] == "订单当前状态"
 
 def test_clean_orders_file():
-    orders, stats = DataCleaner.clean_orders("data/raw_inputs/orders_export.csv")
+    orders, stats = DataCleaner.clean_orders("tests/fixtures/orders_export.csv")
     assert stats["total_rows"] > 0
     assert stats["paid_orders"] > 0
     assert stats["filtered_unpaid"] > 0
