@@ -19,3 +19,10 @@ After explicit authorization, set `PILOT_SMTP_HOST`, optional `PILOT_SMTP_PORT` 
 SMTP_ACCEPTED means the SMTP server accepted the message, not DELIVERED. SEND_FAILED can retry up to three attempts; SEND_UNKNOWN or a crash in SENDING requires provider-side reconciliation and has no automatic resend. No delivery webhook is configured; delivery and client acceptance remain unknown. Local processing restarts safely under an OS job lock. Poll is a bounded single scan of the latest 100 messages; continuous monitoring, backfill and scheduling are not enabled.
 
 `agent_sales.py won` records an unverified payment claim only, not verified revenue. Legacy lead SMTP sending is disabled; only reviewed pilot jobs use the live sending path. Pricing, collection fees, refunds, invoice and payout evidence remain separate from engineering success.
+
+
+## Small-order trial: CSV cleanup
+
+The first proposed Xianyu listing is a fixed-scope CSV cleanup service, ¥29.90 trial price (not published or demand-validated). Up to 3 files, 5,000 total rows, 20 columns, 5 MB per file; identical headers required. Deliver cleaned CSV, per-row change log and reconciliation JSON. This avoids financial interpretation and custom integrations. Original files remain untouched. Exact-row deduplication after trimming is opt-in; missing values are flagged, never filled. Formula-like/signed fields require separate review. CSV columns must be imported as text to retain leading zeros.
+
+Run `python -m engine.csv_microservice input1.csv input2.csv --out NEW_PRIVATE_FOLDER --deduplicate` only after the customer agrees to that deduplication rule. Existing output directories are never overwritten. The listing copy is in `business/02_commercial_offer.md`; the synthetic preview is local under ignored `data/microservice-demo-result`. This is a separate fixed-format service, not yet an unattended mailbox job type. Native xlsx/xls is outside this initial offer.

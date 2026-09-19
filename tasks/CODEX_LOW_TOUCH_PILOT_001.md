@@ -83,3 +83,12 @@
 商业目标另行保持 OPEN，直到真实陌生客户付款、交付、验收和到账；评价只能请求真实反馈，不要求五星。
 
 交付只需简报：实际改了什么 / 验证证据 / 是否真实发出与收到 / 实际收支 / 弊端与未解决点 / 下一步或一次性必要操作。不要自动合并本 PR。
+
+
+## Small-order execution update
+
+Selected Xianyu because the user confirmed an existing account and completed login. Prepared one CSV cleanup listing at ¥29.90: up to 3 files, 5,000 rows, 20 columns, 5 MB per file; exact-row deduplication only by agreement; no missing-value invention. Implemented a bounded standalone module using the standard library; reused existing repository/runtime. Original 36 tests plus 8 targeted CSV tests: 44 passed in 0.68s. A synthetic 5-row / 2-file example produced 4 output rows and one traceable duplicate removal.
+
+The live publish form shows estimated basic service fee ¥0.18 (0.6%) and proceeds ¥29.72 before labor and any other charges. This is a UI estimate, not earned revenue. Description, price and no-shipping option have been filled. The accurate office办公制作 category explicitly requires the mobile app. Opened the official continue-in-app QR; no publish click, no active listing and no customer order. The synthetic comparison image and listing copy are stored locally under ignored data/microservice-demo-result. No personal address or authenticated UI capture is included in public artifacts.
+
+Evidence for the service category: https://www.fiverr.com/pawelk83/merge-multiple-excel-files-into-one-excel-file-no-file-limit (public gig and dated buyer reviews; not evidence of our demand). Xianyu fees and category restriction verified directly in the authenticated form on 2026-09-19. Next external action is mobile-app continuation and final listing review. Main remains unchanged.
