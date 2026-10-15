@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "checked_at": "2026-09-18 22:18:06",
+  "checks": {
+    "gmv_vs_daily_sum": {
+      "total_gmv": 121315.0,
+      "daily_sum": 121315.0,
+      "diff": 0.0,
+      "passed": true
+    },
+    "net_sales_equation": {
+      "total_net_sales": 109375.0,
+      "calculated_net": 109375.0,
+      "diff": 0.0,
+      "passed": true
+    },
+    "gmv_vs_sku_sum": {
+      "total_gmv": 121315.0,
+      "sku_sum": 121315.0,
+      "diff": 0.0,
+      "passed": true
+    },
+    "ad_spend_vs_campaign_sum": {
+      "total_ad_spend": 0,
+      "campaign_spend_sum": 0,
+      "diff": 0,
+      "passed": true
+    },
+    "profit_equation": {
+      "gross_profit": 109375.0,
+      "expected_profit": 109375.0,
+      "diff": 0.0,
+      "passed": true
+    }
+  },
+  "errors": [],
+  "warnings": [],
+  "store_summary_snapshot": {
+    "store_name": "Nordic Home Decor",
+    "period_label": "Weekly-Delivery-2026-W37",
+    "total_orders": 372,
+    "total_units": 415,
+    "total_gmv": 121315.0,
+    "total_net_sales": 109375.0,
+    "total_refunds": 11940.0,
+    "refund_rate_pct": 9.84,
+    "total_ad_spend": 0,
+    "blended_roi": 0.0,
+    "gross_profit": 109375.0,
+    "gross_profit_margin_pct": 100.0
+  }
+}
